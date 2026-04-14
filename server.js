@@ -1,21 +1,47 @@
 const express = require('express');
+const multer = require('multer');
 const app = express();
 
 app.use(express.json());
-app.use(express.static(__dirname));
 
+// 🔥 STATIC FILE (WAJIB)
+app.use(express.static('public'));
+app.use('/uploads', express.static('uploads'));
+
+// 🔥 SETUP UPLOAD
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+const upload = multer({ storage: storage });
+
+// DATA PRODUK
 let produk = [
   { id: 1, nama: "Nokos Indonesia", harga: 10000, stok: 5 },
   { id: 2, nama: "Nokos USA", harga: 25000, stok: 3 },
   { id: 3, nama: "Nokos UK", harga: 30000, stok: 2 }
 ];
 
+// 🔥 DATA ORDER
+let orders = [];
+
+// =======================
+// API PRODUK
+// =======================
+
 // Ambil produk
 app.get('/produk', (req, res) => {
   res.json(produk);
 });
 
-// Order
+// =======================
+// ORDER (SUDAH ADA PEMBAYARAN)
+// =======================
+
 app.post('/order', (req, res) => {
   let p = produk.find(x => x.id == req.body.id);
 
@@ -24,10 +50,52 @@ app.post('/order', (req, res) => {
   }
 
   p.stok--;
-  res.json({ status: "order berhasil" });
+
+  const orderId = "ORD" + Date.now();
+
+  orders.push({
+    order_id: orderId,
+    produk: p.nama,
+    status: "pending",
+    bukti: null
+  });
+
+  res.json({
+    order_id: orderId
+  });
 });
 
-// Update stok
+// =======================
+// UPLOAD BUKTI
+// =======================
+
+app.post('/upload-bukti', upload.single('bukti'), (req, res) => {
+  let orderId = req.body.order_id;
+
+  let order = orders.find(o => o.order_id == orderId);
+
+  if (!order) {
+    return res.send("Order tidak ditemukan");
+  }
+
+  order.bukti = req.file.filename;
+  order.status = "menunggu_verifikasi";
+
+  res.send("Bukti berhasil dikirim");
+});
+
+// =======================
+// LIHAT ORDER (UNTUK ADMIN)
+// =======================
+
+app.get('/orders', (req, res) => {
+  res.json(orders);
+});
+
+// =======================
+// UPDATE STOK
+// =======================
+
 app.post('/update-stok', (req, res) => {
   let { id, jumlah } = req.body;
 
@@ -44,7 +112,10 @@ app.post('/update-stok', (req, res) => {
   res.json({ status: "stok diupdate", stok: p.stok });
 });
 
-// 🔥 TAMBAH PRODUK
+// =======================
+// TAMBAH PRODUK
+// =======================
+
 app.post('/tambah-produk', (req, res) => {
   let { nama, harga, stok } = req.body;
 
@@ -60,7 +131,10 @@ app.post('/tambah-produk', (req, res) => {
   res.json({ status: "produk ditambahkan" });
 });
 
-// Login admin
+// =======================
+// LOGIN ADMIN
+// =======================
+
 app.post('/login', (req, res) => {
   if (req.body.username === "admin" && req.body.password === "1234") {
     res.json({ status: "login berhasil" });
@@ -68,5 +142,9 @@ app.post('/login', (req, res) => {
     res.json({ status: "login gagal" });
   }
 });
+
+// =======================
+// JALANKAN SERVER
+// =======================
 
 app.listen(3000, () => console.log("Server jalan di http://localhost:3000"));

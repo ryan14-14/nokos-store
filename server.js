@@ -4,7 +4,7 @@ const app = express();
 
 app.use(express.json());
 
-// 🔥 STATIC FILE (WAJIB)
+// 🔥 STATIC FILE
 app.use(express.static('public'));
 app.use('/uploads', express.static('uploads'));
 
@@ -21,25 +21,24 @@ const upload = multer({ storage: storage });
 
 // DATA PRODUK
 let produk = [
-  { id: 1, nama: "Nokos Indonesia", harga: 10000, stok: 5 },
+  { id: 1, nama: "Nokos Indonesi", harga: 10000, stok: 5 },
   { id: 2, nama: "Nokos USA", harga: 25000, stok: 3 },
   { id: 3, nama: "Nokos UK", harga: 30000, stok: 2 }
 ];
 
-// 🔥 DATA ORDER
+// DATA ORDER
 let orders = [];
 
 // =======================
 // API PRODUK
 // =======================
 
-// Ambil produk
 app.get('/produk', (req, res) => {
   res.json(produk);
 });
 
 // =======================
-// ORDER (SUDAH ADA PEMBAYARAN)
+// ORDER
 // =======================
 
 app.post('/order', (req, res) => {
@@ -85,7 +84,7 @@ app.post('/upload-bukti', upload.single('bukti'), (req, res) => {
 });
 
 // =======================
-// LIHAT ORDER (UNTUK ADMIN)
+// LIHAT ORDER
 // =======================
 
 app.get('/orders', (req, res) => {
@@ -144,7 +143,11 @@ app.post('/login', (req, res) => {
 });
 
 // =======================
-// JALANKAN SERVER
+// 🔥 WAJIB UNTUK RAILWAY
 // =======================
 
-app.listen(3000, () => console.log("Server jalan di http://localhost:3000"));
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log("Server jalan di port " + PORT);
+});

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Panel</title>
+</head>
+<body>
+
+<h2>Login Admin</h2>
+
+<div id="login">
+  <input id="u" placeholder="username"><br>
+  <input id="p" type="password" placeholder="password"><br>
+  <button onclick="login()">Login</button>
+</div>
+
+<div id="dashboard" style="display:none;">
+  <h2>Dashboard Admin</h2>
+
+  <!-- 🔥 FORM TAMBAH PRODUK -->
+  <h3>Tambah Produk</h3>
+  <input id="nama" placeholder="Nama produk"><br>
+  <input id="harga" placeholder="Harga"><br>
+  <input id="stok" placeholder="Stok"><br>
+  <button onclick="tambahProduk()">Tambah</button>
+
+  <hr>
+
+  <div id="data"></div>
+</div>
+
+<script>
+async function login(){
+  let res = await fetch('/login',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      username: document.getElementById('u').value,
+      password: document.getElementById('p').value
+    })
+  });
+
+  let data = await res.json();
+
+  if(data.status === "login berhasil" || data.status === "ok"){
+    document.getElementById("login").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    loadData();
+  } else {
+    alert("Login gagal");
+  }
+}
+
+// 🔥 LOAD PRODUK
+async function loadData(){
+  let res = await fetch('/produk');
+  let data = await res.json();
+
+  let html = "";
+  data.forEach(p => {
+    html += `
+      <div>
+        <h3>${p.nama}</h3>
+        <p>Harga: Rp ${p.harga}</p>
+        <p>Stok: <b>${p.stok}</b></p>
+
+        <button onclick="updateStok(${p.id}, 1)">+1</button>
+        <button onclick="updateStok(${p.id}, -1)">-1</button>
+      </div>
+      <hr>
+    `;
+  });
+
+  document.getElementById("data").innerHTML = html;
+}
+
+// 🔥 UPDATE STOK
+async function updateStok(id, jumlah){
+  let res = await fetch('/update-stok', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ id, jumlah })
+  });
+
+  let data = await res.json();
+  alert(data.status);
+
+  loadData();
+}
+
+// 🔥 TAMBAH PRODUK
+async function tambahProduk(){
+  let nama = document.getElementById("nama").value;
+  let harga = document.getElementById("harga").value;
+  let stok = document.getElementById("stok").value;
+
+  let res = await fetch('/tambah-produk', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ nama, harga, stok })
+  });
+
+  let data = await res.json();
+  alert(data.status);
+
+  // reset input
+  document.getElementById("nama").value = "";
+  document.getElementById("harga").value = "";
+  document.getElementById("stok").value = "";
+
+  loadData();
+}
+</script>
+
+</body>
+</html>
